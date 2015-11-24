@@ -32,6 +32,7 @@ use pocketmine\nbt\tag\Enum;
 use pocketmine\nbt\tag\Short;
 use pocketmine\nbt\tag\String;
 use pocketmine\network\Network;
+use pocketmine\network\protocol\PlayerListPacket;
 use pocketmine\network\protocol\AddPlayerPacket;
 use pocketmine\network\protocol\RemovePlayerPacket;
 use pocketmine\Player;
@@ -59,6 +60,7 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 
 	protected $skin;
 	protected $isSlim = false;
+        protected $isTransparent = false;
 
 	public function getSkinData(){
 		return $this->skin;
@@ -68,6 +70,10 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 		return $this->isSlim;
 	}
 
+        public function isSkinTransparent(){
+		return $this->isTransparent;
+	}
+        
 	/**
 	 * @return UUID|null
 	 */
@@ -86,9 +92,10 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 	 * @param string $str
 	 * @param bool   $isSlim
 	 */
-	public function setSkin($str, $isSlim = false){
+	public function setSkin($str, $isSlim = false, $isTransparent = false){
 		$this->skin = $str;
 		$this->isSlim = (bool) $isSlim;
+                $this->isTransparent = (bool) $isTransparent;
 	}
 
 	public function getInventory(){
@@ -210,9 +217,14 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 
 
 			if(!($this instanceof Player)){
-				$this->server->updatePlayerListData($this->getUniqueId(), $this->getId(), $this->getName(), $this->isSlim, $this->skin, [$player]);
+				$this->server->updatePlayerListData($this->getUniqueId(), $this->getId(), $this->getName(), $this->isSlim, $this->isTransparent, $this->skin, [$player]);
 			}
 
+                        $pk = new PlayerListPacket();
+ 			$pk->type = PlayerListPacket::TYPE_ADD;
+			$pk->entries[] = [$this->getUniqueId(), $this->getId(), $this->getName(), $this->isSlim, $this->isTransparent, $this->skin];
+ 			$player->dataPacket($pk);
+                        
 			$pk = new AddPlayerPacket();
 			$pk->uuid = $this->getUniqueId();
 			$pk->username = $this->getName();
