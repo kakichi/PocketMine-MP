@@ -54,6 +54,15 @@ class PlayerInventory extends BaseInventory{
 		$this->sendContents($this->getViewers());
 	}
 
+        public function getHotBarIndexFromSlot($slot) {
+            foreach($this->hotbar as $i => $s) {
+                if ($s === $slot) {
+                    return $i;
+                }
+            }
+            return -1;
+        }
+        
 	public function getHotbarSlotIndex($index){
 		return ($index >= 0 and $index < $this->getHotbarSize()) ? $this->hotbar[$index] : -1;
 	}
@@ -106,17 +115,22 @@ class PlayerInventory extends BaseInventory{
 		if($slot >= -1 and $slot < $this->getSize()){
 			$item = $this->getItem($slot);
 
-			$itemIndex = $this->getHeldItemIndex();
+//			$itemIndex = $this->getHeldItemIndex();
 
 			if($this->getHolder() instanceof Player){
-				Server::getInstance()->getPluginManager()->callEvent($ev = new PlayerItemHeldEvent($this->getHolder(), $item, $slot, $itemIndex));
+				Server::getInstance()->getPluginManager()->callEvent($ev = new PlayerItemHeldEvent($this->getHolder(), $item, $slot, $this->itemInHandIndex));
 				if($ev->isCancelled()){
 					$this->sendContents($this->getHolder());
 					return;
 				}
 			}
-
-			$this->setHotbarSlotIndex($itemIndex, $slot);
+                        // hotbar swap item fix
+                        $swapIndex = $this->getHotBarIndexFromSlot($slot);
+                        if ($swapIndex > -1) {
+                            $swapSlot = $this->getHotbarSlotIndex($this->itemInHandIndex);
+                            $this->setHotbarSlotIndex($swapIndex, $swapSlot);
+                        }
+			$this->setHotbarSlotIndex($this->itemInHandIndex, $slot);
 		}
 	}
 
