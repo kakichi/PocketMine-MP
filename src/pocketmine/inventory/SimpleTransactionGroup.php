@@ -153,6 +153,12 @@ class SimpleTransactionGroup implements TransactionGroup{
 		foreach($this->transactions as $transaction){
 			$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem());
 		}
+                foreach($this->inventories as $inventory){
+                        if($inventory instanceof PlayerInventory){
+                                $inventory->sendArmorContents($this->getSource());
+                        }
+                        $inventory->sendContents($this->getSource());
+                }
 
 		$this->hasExecuted = true;
 

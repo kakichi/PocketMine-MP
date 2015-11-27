@@ -38,7 +38,7 @@ class WaterLily extends Flowable{
 	}
 
 	public function isSolid(){
-		return false;
+                return true;
 	}
 
 	public function getName(){
@@ -49,18 +49,25 @@ class WaterLily extends Flowable{
 		return 0.6;
 	}
 
-	public function canPassThrough(){
-		return true;
+        public function getBoundingBox(){
+		return new AxisAlignedBB(
+			$this->x,
+			$this->y,
+			$this->z,
+			$this->x + 1,
+			$this->y + 0.0625,
+			$this->z + 1
+		);
 	}
-
+        
 	protected function recalculateBoundingBox(){
 		return new AxisAlignedBB(
 			$this->x,
 			$this->y,
 			$this->z,
-			$this->x,
+			$this->x + 1,
 			$this->y + 0.0625,
-			$this->z
+			$this->z + 1
 		);
 	}
 
