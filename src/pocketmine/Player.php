@@ -573,14 +573,14 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 	public function setDisplayName($name){
 		$this->displayName = $name;
 		if($this->spawned){
-			$this->server->updatePlayerListData($this->getUniqueId(), $this->getId(), $this->getDisplayName(), $this->isSkinSlim(), $this->isTransparent, $this->getSkinData());
+			$this->server->updatePlayerListData($this->getUniqueId(), $this->getId(), $this->getDisplayName(), $this->getSkinName(), $this->getSkinData());
 		}
 	}
 
-	public function setSkin($str, $isSlim = false, $isTransparent = false){
-		parent::setSkin($str, $isSlim);
+	public function setSkin($str, $skinName){
+		parent::setSkin($str, $skinName);
 		if($this->spawned){
-			$this->server->updatePlayerListData($this->getUniqueId(), $this->getId(), $this->getDisplayName(), $isSlim, $isTransparent, $str);
+			$this->server->updatePlayerListData($this->getUniqueId(), $this->getId(), $this->getDisplayName(), $skinName, $str);
 		}
 	}
 
@@ -1872,7 +1872,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					return;
 				}
 
-				$this->setSkin($packet->skin, $packet->slim);
+				$this->setSkin($packet->skin, $packet->skinName);
 
 				$this->server->getPluginManager()->callEvent($ev = new PlayerPreLoginEvent($this, "Plugin reason"));
 				if($ev->isCancelled()){
@@ -2043,25 +2043,24 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					}
 
 					if($item->getId() === Item::SNOWBALL){
-						$nbt = new Compound("", [
-							"Pos" => new Enum("Pos", [
-								new Double("", $this->x),
-								new Double("", $this->y + $this->getEyeHeight()),
-								new Double("", $this->z)
-							]),
-							"Motion" => new Enum("Motion", [
-								new Double("", $aimPos->x),
-								new Double("", $aimPos->y),
-								new Double("", $aimPos->z)
-							]),
-							"Rotation" => new Enum("Rotation", [
-								new Float("", $this->yaw),
-								new Float("", $this->pitch)
-							]),
-						]);
+						$dir = $this->getDirectionVector();
+						$frontPos = $this->add($this->getDirectionVector()->multiply(1.1));
+						$nbt = new Compound("",
+                                                        ["Pos" => new Enum("Pos",
+                                                                [new Double("", $frontPos->x),
+                                                                new Double("", $frontPos->y + $this->getEyeHeight()),
+                                                                new Double("", $frontPos->z)]),
+                                                        "Motion" => new Enum("Motion",
+                                                                [new Double("", $dir->x),
+                                                                new Double("", $dir->y),
+                                                                new Double("", $dir->z)]),
+                                                        "Rotation" => new Enum("Rotation",
+                                                                [new Float("", 0),
+                                                                new Float("", 0)])]
+						);
+						$snowball = Entity::createEntity("Snowball", $this->chunk, $nbt);
 
 						$f = 1.5;
-						$snowball = Entity::createEntity("Snowball", $this->chunk, $nbt, $this);
 						$snowball->setMotion($snowball->getMotion()->multiply($f));
 						if($this->isSurvival()){
 							$item->setCount($item->getCount() - 1);
